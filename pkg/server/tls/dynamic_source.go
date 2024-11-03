@@ -159,7 +159,7 @@ func (f *DynamicSource) Start(ctx context.Context) error {
 	})
 
 	// check the current certificate in case it needs updating
-	regenTicker := time.NewTicker(10 * 24 * 60 * 60 * time.Second) //10 days
+	regenTicker := time.NewTicker(5 * 24 * 60 * 60 * time.Second) //5 days
 	if err := func() error {
 		for {
 			// regenerate the serving certificate if the root CA has been rotated
