@@ -23,6 +23,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -71,6 +73,13 @@ type DynamicSource struct {
 }
 
 var _ CertificateSource = &DynamicSource{}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
 
 // Implements Runnable (https://github.com/kubernetes-sigs/controller-runtime/blob/56159419231e985c091ef3e7a8a3dee40ddf1d73/pkg/manager/manager.go#L287)
 func (f *DynamicSource) Start(ctx context.Context) error {
@@ -159,7 +168,11 @@ func (f *DynamicSource) Start(ctx context.Context) error {
 	})
 
 	// check the current certificate in case it needs updating
-	regenTicker := time.NewTicker(5 * 24 * 60 * 60 * time.Second) //5 days
+	interval, err := strconv.Atoi(getEnv("WEBHOOK_REGEN_INTERVAL", "10"))
+	if err != nil {
+		return err
+	}
+	regenTicker := time.NewTicker(time.Duration(interval) * 60 * time.Second) //default 10 minutes
 	if err := func() error {
 		for {
 			// regenerate the serving certificate if the root CA has been rotated
