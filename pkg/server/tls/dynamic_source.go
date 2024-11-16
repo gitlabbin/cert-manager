@@ -172,17 +172,16 @@ func (f *DynamicSource) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	regenTicker := time.NewTicker(time.Duration(interval) * 60 * time.Second) //default 10 minutes
+	regenDelay := time.Duration(interval) * 60 * time.Second //default 10 minutes
 	if err := func() error {
 		for {
 			// regenerate the serving certificate if the root CA has been rotated
 			select {
 			// check if the context has been cancelled
 			case <-ctx.Done():
-				regenTicker.Stop()
 				return ctx.Err()
 
-			case <-regenTicker.C:
+			case <-time.After(regenDelay):
 				f.log.V(logf.InfoLevel).Info("Regen ticker - regenerating serving certificates")
 
 			// trigger regeneration if the root CA has been rotated
